@@ -6,10 +6,14 @@ use ChatStats\Engine;
 use ChatStats\Messages\ExportMessageSource;
 use ChatStats\Renderer\HtmlRenderer;
 use ChatStats\Stats\CountTotalByDateHandler;
+use ChatStats\Stats\CountTotalByUserHandler;
 use ChatStats\Stats\CountTotalHandler;
+use ChatStats\Stats\CountTotalUsersHandler;
 use ChatStats\Stats\FirstMessageHandler;
 use ChatStats\Stats\MedianByDateHandler;
 use ChatStats\Stats\StatHandler;
+use ChatStats\Stats\StrlenByUserHandler;
+use ChatStats\Stats\UserMedianMessageLengthHandler;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
@@ -103,6 +107,10 @@ final class GenerateCommand extends Command
             new CountTotalHandler(),
             new MedianByDateHandler(),
             new CountTotalByDateHandler(),
+            new CountTotalByUserHandler(),
+            new StrlenByUserHandler(),
+            new UserMedianMessageLengthHandler(),
+            new CountTotalUsersHandler(),
         ];
     }
 
