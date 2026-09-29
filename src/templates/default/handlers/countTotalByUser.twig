@@ -1,5 +1,5 @@
 <ol>
     {% for user, ct in data %}
-        <li>{{ user }} — {{ ct|number_format(0, '.', ' ') }}</li>
+        <li>{{ user|user_link }} — {{ ct|number_format(0, '.', ' ') }}</li>
     {% endfor %}
 </ol>

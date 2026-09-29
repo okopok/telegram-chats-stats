@@ -1,0 +1,59 @@
+{% if data.total_forwarded == 0 %}
+    <blockquote>В этом чате пока нет пересланных сообщений.</blockquote>
+{% else %}
+    <blockquote>
+        Переслано {{ data.total_forwarded|number_format(0, '.', ' ') }} из
+        {{ data.total|number_format(0, '.', ' ') }} сообщений
+        ({{ ((data.total_forwarded / data.total) * 100)|round(1) }}%).
+    </blockquote>
+    <div class="row-fluid">
+        <div class="span6">
+            <h4>Кто пересылает</h4>
+            <canvas id="{{ templateKey }}_byuser" width="400"
+                    height="{% if data.by_user|length > 10 %}{{ data.by_user|length * 10 }}{% else %}100{% endif %}"></canvas>
+        </div>
+        <div class="span6">
+            <h4>Топ источников</h4>
+            <canvas id="{{ templateKey }}_sources" width="400"
+                    height="{% if data.sources|length > 10 %}{{ data.sources|length * 10 }}{% else %}100{% endif %}"></canvas>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            new Chart('{{ templateKey }}_byuser', {
+                type: 'horizontalBar',
+                data: {
+                    labels: {{ data.by_user|map(r => r.user)|nicks|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }},
+                    datasets: [{
+                        label: 'Переслано',
+                        data: [{{ data.by_user|map(r => r.count)|join(', ')|raw }}],
+                    }]
+                },
+                options: {
+                    plugins: {colorschemes: {scheme: 'brewer.Paired12'}},
+                    responsible: true,
+                    animation: {duration: 0},
+                    hover: {animationDuration: 0},
+                    responsiveAnimationDuration: 0
+                }
+            });
+            new Chart('{{ templateKey }}_sources', {
+                type: 'horizontalBar',
+                data: {
+                    labels: {{ data.sources|map(r => r.source)|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }},
+                    datasets: [{
+                        label: 'Переслано из',
+                        data: [{{ data.sources|map(r => r.count)|join(', ')|raw }}],
+                    }]
+                },
+                options: {
+                    plugins: {colorschemes: {scheme: 'brewer.Paired12'}},
+                    responsible: true,
+                    animation: {duration: 0},
+                    hover: {animationDuration: 0},
+                    responsiveAnimationDuration: 0
+                }
+            });
+        });
+    </script>
+{% endif %}

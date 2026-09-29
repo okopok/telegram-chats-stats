@@ -1,0 +1,24 @@
+# Артефакты сборки/работы — не попадают в образ
+vendor/
+var/
+public/data/
+
+# VCS и IDE
+.git/
+.gitignore
+.idea/
+.DS_Store
+
+# Вся документация и opensource-обвязка — в образе не нужны
+*.md
+LICENSE
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+SECURITY.md
+CHANGELOG.md
+CITATION.cff
+.github/
+docs/
+
+# Логи
+*.log

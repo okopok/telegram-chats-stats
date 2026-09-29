@@ -4,9 +4,15 @@ namespace ChatStats\Stats\Words;
 
 use ChatStats\Entity\Message;
 use ChatStats\Messages\MessageCollection;
-use Illuminate\Support\Collection;
-use function collect;
+use function arsort;
+use function array_fill_keys;
+use function array_filter;
+use function array_keys;
+use function array_slice;
+use function array_unique;
+use function count;
 use function in_array;
+use function ksort;
 use function mb_ereg_replace;
 use function mb_split;
 use function mb_strlen;
@@ -17,6 +23,9 @@ use function trim;
 /**
  * Подсчёт популярных слов: подготовка строки и агрегация по словам,
  * пользователям и «уникальным» словам.
+ *
+ * Работает на обычных PHP-массивах (без Illuminate Collections) —
+ * заметно экономит память на больших экспортах.
  */
 final class WordsAnalyzer
 {
@@ -28,13 +37,17 @@ final class WordsAnalyzer
 
     private int $wordLenMin;
 
-    private Collection $resultList;
+    /** @var array<string, array<string, int>> ключ алиаса => (юзер => счётчик) */
+    private array $resultList = [];
 
-    private Collection $resultWordTotal;
+    /** @var array<string, int> слово => счётчик по всем */
+    private array $resultWordTotal = [];
 
-    private Collection $resultUserWordTotal;
+    /** @var array<string, array<string, int>> юзер => (слово => счётчик) */
+    private array $resultUserWordTotal = [];
 
-    private Collection $uniqWords;
+    /** @var array<string, string[]> слово => список юзеров */
+    private array $uniqWords = [];
 
     /**
      * @param array{stop_words: string[], aliases: array<string, string[]>, word_len_min: int} $config
@@ -51,45 +64,77 @@ final class WordsAnalyzer
      */
     public function analyze(MessageCollection $messages): array
     {
-        $this->resultWordTotal = collect([]);
-        $this->resultUserWordTotal = collect([]);
-        $this->uniqWords = collect([]);
+        $this->resultWordTotal = [];
+        $this->resultUserWordTotal = [];
+        $this->uniqWords = [];
+        $this->resultList = array_fill_keys(array_keys($this->aliases), []);
 
-        $emptyKeys = collect($this->aliases)->mapWithKeys(static function ($value, $key) {
-            return [$key => 0];
-        })->all();
-
-        $this->resultList = collect($this->aliases)->mapWithKeys(static function ($value, $key) {
-            return [$key => collect([])];
-        });
-
-        $messages->messages()->filter(function (Message $message) {
-            return mb_strlen($message->text);
-        })->each(function (Message $message) use ($emptyKeys) {
+        foreach ($messages->iterate() as $message) {
+            if (!mb_strlen($message->text)) {
+                continue;
+            }
             $words = $this->prepareString($message->text);
 
             $this->countWords($words);
             $this->countUserWord($words, $message->from->username);
-            $this->countUserWordList($message, $words, $emptyKeys);
-        });
+            $this->countUserWordList($message, $words);
+        }
         $this->countUniqWordsByUser();
 
         return [
-            'list' => $this->resultList
-                ->mapWithKeys(static function ($value, $key) {
-                    return [$key => $value->sortDesc()];
-                })
-                ->filter(function ($item, $key) {
-                    return collect($item)->filter()->isNotEmpty();
-                })->all(),
-            'total' => $this->resultWordTotal->sortDesc()->take(100)->all(),
-            'users' => $this->resultUserWordTotal->mapWithKeys(static function ($value, $key) {
-                return [$key => $value->sortDesc()->take(50)->filter(static function ($value) {
-                    return $value > 1;
-                })->all()];
-            })->all(),
-            'uniq' => $this->uniqWords->sort()->all(),
+            'list' => $this->buildListResult(),
+            'total' => $this->top($this->resultWordTotal, 100),
+            'users' => $this->buildUsersResult(),
+            'uniq' => $this->uniqWords,
         ];
+    }
+
+    /**
+     * Алиасы с ненулевыми счётчиками, по убыванию.
+     *
+     * @return array<string, array<string, int>>
+     */
+    private function buildListResult(): array
+    {
+        $result = [];
+        foreach ($this->resultList as $key => $values) {
+            arsort($values);
+            $values = array_filter($values);
+            if ($values !== []) {
+                $result[$key] = $values;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Счётчики по юзерам: топ-50 слов с счётчиком > 1, по убыванию.
+     *
+     * @return array<string, array<string, int>>
+     */
+    private function buildUsersResult(): array
+    {
+        $result = [];
+        foreach ($this->resultUserWordTotal as $user => $words) {
+            $words = $this->top($words, 50);
+            $words = array_filter($words, static fn (int $value) => $value > 1);
+            if ($words !== []) {
+                $result[$user] = $words;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Топ-N по убыванию с сохранением ключей.
+     *
+     * @param array<string, int> $values
+     * @return array<string, int>
+     */
+    private function top(array $values, int $n): array
+    {
+        arsort($values);
+        return array_slice($values, 0, $n, true);
     }
 
     /**
@@ -126,9 +171,7 @@ final class WordsAnalyzer
             if ($this->checkStopWord($word) || mb_strlen($word) < $this->wordLenMin) {
                 continue;
             }
-            $wordStat = $this->resultWordTotal->get($word, 0);
-            $wordStat++;
-            $this->resultWordTotal[$word] = $wordStat;
+            $this->resultWordTotal[$word] = ($this->resultWordTotal[$word] ?? 0) + 1;
         }
     }
 
@@ -147,67 +190,57 @@ final class WordsAnalyzer
                 continue;
             }
 
-            $userWords = $this->resultUserWordTotal->get($userName, collect([]));
-            $wordStat = $userWords->get($word, 0);
-            $wordStat++;
-
-            $userWords->offsetSet($word, $wordStat);
-            $this->resultUserWordTotal->offsetSet($userName, $userWords);
-
-            if (!$this->uniqWords->has($word)) {
-                $this->uniqWords[$word] = collect([]);
-            }
-            $this->uniqWords[$word]->push($userName);
+            $this->resultUserWordTotal[$userName][$word] = ($this->resultUserWordTotal[$userName][$word] ?? 0) + 1;
+            $this->uniqWords[$word][] = $userName;
         }
     }
 
     /**
+     * Слова из алиасов в сообщении юзера — в resultList.
+     *
      * @param string[] $words
-     * @param array<string, int> $emptyKeys
      */
-    private function countUserWordList(Message $message, array $words, array $emptyKeys): void
+    private function countUserWordList(Message $message, array $words): void
     {
-        $current = $emptyKeys;
-
         foreach ($this->aliases as $key => $aliasForms) {
+            $current = 0;
             foreach ($aliasForms as $alias) {
                 foreach ($words as $word) {
                     if ($alias == $word) {
-                        $current[$key]++;
+                        $current++;
                     }
                 }
             }
-        }
 
-        foreach ($current as $key => $value) {
-            if (!$value) {
+            if (!$current) {
                 continue;
             }
-            $curVal = $this->resultList->get($key)->get($message->from->username, 0);
-            $this->resultList[$key]->offsetSet($message->from->username, $curVal + $value);
+            $userName = $message->from->username;
+            $this->resultList[$key][$userName] = ($this->resultList[$key][$userName] ?? 0) + $current;
         }
     }
 
+    /**
+     * Уникальные слова юзера (встречаются только у него): топ-10 по убыванию.
+     */
     private function countUniqWordsByUser(): void
     {
-        $result = collect([]);
+        $result = [];
 
-        $this->uniqWords->filter(static function ($value) {
-            return $value->unique()->count() === 1;
-        })
-            ->mapWithKeys(static function ($value, $key) {
-                return [$key => $value[0]];
-            })
-            ->each(function ($user, $word) use ($result) {
-                if (!$result->has($user)) {
-                    $result->offsetSet($user, collect([$word => $this->resultWordTotal[$word]]));
-                } else {
-                    $result[$user]->offsetSet($word, $this->resultWordTotal[$word]);
-                }
-            });
+        foreach ($this->uniqWords as $word => $users) {
+            if (count(array_unique($users)) !== 1) {
+                continue;
+            }
+            $user = $users[0];
+            $result[$user][$word] = $this->resultWordTotal[$word];
+        }
 
-        $this->uniqWords = $result->sort()->mapWithKeys(static function ($value, $key) {
-            return [$key => $value->sortDesc()->take(10)->all()];
-        });
+        ksort($result);
+        foreach ($result as $user => &$words) {
+            $words = $this->top($words, 10);
+        }
+        unset($words);
+
+        $this->uniqWords = $result;
     }
 }

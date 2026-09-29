@@ -1,0 +1,21 @@
+{% if data is empty %}
+    <blockquote>В этом чате пока нет сообщений с реакциями.</blockquote>
+{% else %}
+    <ol>
+        {% for item in data %}
+            <li>
+                <strong>
+                    {{ item.type }} {{ item.from|user_link }},
+                    {{ item.date|date('d.m.Y H:i') }}
+                    — {{ item.total|number_format(0, '.', ' ') }} реакций:
+                    {% for r in item.reactions %}{{ r.emoji }} ×{{ r.count }}{% if not loop.last %}, {% endif %}{% endfor %}
+                </strong>
+                <div class="well well-small">
+                    <a href="#" onclick="return false;" style="color: inherit; text-decoration: none;">
+                        {% if item.text|length > 300 %}{{ item.text|slice(0, 300) }}…{% else %}{{ item.text }}{% endif %}
+                    </a>
+                </div>
+            </li>
+        {% endfor %}
+    </ol>
+{% endif %}

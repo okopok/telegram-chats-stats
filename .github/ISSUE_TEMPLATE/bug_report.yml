@@ -1,0 +1,33 @@
+---
+name: Bug report
+about: Report a problem with Telegram Chat Stats
+title: '[Bug] '
+labels: bug
+assignees: ''
+---
+
+**Describe the bug**
+A clear and concise description of what the bug is.
+
+**To reproduce**
+1. Command run (with options):
+
+```bash
+php bin/chatstats generate <export-folder> --key=check --limit=2000
+```
+
+2. Export details: Telegram Desktop version, export generation (old / new 2025+), number of messages.
+
+**Expected behavior**
+What did you expect to happen?
+
+**Actual behavior**
+What actually happened? Include the error output or a screenshot of the generated page.
+
+**Environment**
+- PHP version: `php -v`
+- OS: 
+- Version of the tool (commit hash or tag):
+
+**Additional context**
+Anything else that might help: sample HTML fragment of the export that breaks parsing, etc.

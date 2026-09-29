@@ -1,0 +1,15 @@
+{% if data is empty %}
+    <blockquote>В этом чате нет текстовых сообщений.</blockquote>
+{% else %}
+    <ol>
+        {% for item in data %}
+            <li>
+                <strong>📏 {{ item.len|number_format(0, '.', ' ') }} знаков</strong>
+                — {{ item.from|user_link }}, {{ item.date|date('d.m.Y H:i') }}
+                <div class="well well-small">
+                    {% if item.text|length > 400 %}{{ item.text|slice(0, 400) }}…{% else %}{{ item.text }}{% endif %}
+                </div>
+            </li>
+        {% endfor %}
+    </ol>
+{% endif %}

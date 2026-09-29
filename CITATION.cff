@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Telegram Chat Stats"
+abstract: "CLI tool that parses Telegram Desktop HTML chat exports and generates a static HTML page with chat statistics (27 panels: reactions, edits, forwards, media weight, polls, reply speed, chronotypes, heatmap, streaks and more). No framework, no server, no database."
+authors:
+  - family-names: "Molodtsov"
+    given-names: "Aleksandr"
+    email: "molodtsov.sasha@gmail.com"
+    website: "https://t.me/okopok"
+keywords:
+  - telegram
+  - chat
+  - statistics
+  - html-export
+  - cli
+date-released: "2026-09-29"
+license: "GPL-3.0-or-later"
+url: "https://github.com/okopok/telegram-chats-stats"
+preferred-citation:
+  type: software
+  title: "Telegram Chat Stats"
+  version: "1.0.0"
+  date-released: "2026-09-29"
+  authors:
+    - family-names: "Molodtsov"
+      given-names: "Aleksandr"
+  url: "https://github.com/okopok/telegram-chats-stats"

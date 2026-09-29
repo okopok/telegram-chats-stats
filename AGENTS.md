@@ -1,44 +1,43 @@
 # AGENTS.md — chatStats
 
-Личный PHP CLI-инструмент (без фреймворка, без веб-сервера, без тестов, без CI и линтера): парсит **HTML-экспорты чатов Telegram Desktop** и генерирует по одной статической HTML-странице статистики на чат. Комментарии в коде, описания обработчиков и шаблоны — на **русском**, новые — тоже.
+Личный PHP CLI-инструмент (без фреймворка, без веб-сервера, без тестов, без CI и линтера): парсит **HTML-экспорты чатов Telegram Desktop** и генерирует по одной статической HTML-странице статистики на чат. Комментарии в коде, описания обработчиков, шаблоны и документация — на **русском**, новые — тоже.
+
+## Правило документации (обязательно)
+
+**Любое изменение проекта** (новый обработчик, изменение пайплайна, CLI, конфигов, шаблонов, сущностей) **сопровождается обновлением соответствующих разделов `docs/`** (`architecture.md`, `usage.md`, `development.md`, `README.md` при изменении быстрого старта). Документация — часть изменения: без обновления `docs/` изменение **не считается завершённым**. Подробности живут только в `docs/`, этот файл — шпаргалка.
 
 ## Запуск
 
-- Установка: `composer install` (нужен **PHP >= 8.4**; синтаксис PHP 8 можно использовать; сущности остаются публичными DTO — их читает JMS-сериализатор). `vendor/`, `var/` и `public/data` в гитигноре.
-- Запуск:
+- Установка: `composer install` (нужен **PHP >= 8.4**, ext-mbstring). `vendor/`, `var/` и `public/data` в гитигноре.
+- **Docker**: `docker build -t chatstats .` → `docker run --rm -v <папка-экспорта>:/export:ro -v $(pwd)/var:/app/var chatstats generate /export --key=<ключ>` (PHP на хосте не нужен; Dockerfile в корне).
+- `php bin/chatstats generate <папка-экспорта> [--key=<ключ>] [--title=<заголовок>] [--no-cache] [--rebuild] [--limit=<N>] [--nicks] [--debug]`
+  - `<папка-экспорта>` — обязателен; несуществующая папка → ошибка и exit 1.
+  - `--key` (по умолчанию имя папки) → `var/html/<key>.html`; `--title` (по умолчанию ключ) → заголовок страницы; `--no-cache` — не читать/писать кэш; `--rebuild` — пересобрать кэш; `--debug` — тайминги обработчиков (Stopwatch) и Twig без авто-перезагрузки.
+  - **`--limit=<N>`** — обработать только первые N сообщений: быстрые регресс-прогоны на больших чатах (секунды вместо минут). Кэш при лимите **отдельный** (сигнатура с суффиксом `-limit-N`), полный кэш не затирается; в выводе — предупреждение, что прогон проверочный.
+  - **`--nicks`** — вместо имён пользователей выводить их ники со ссылкой на профиль (`https://t.me/<ник>`). Ники берутся из карты `config/nicks.php` («имя → ник», заполняется вручную — в экспорте username нет). В HTML — ссылки, в canvas-графиках — ники без ссылок (Chart.js не умеет). Без `--nicks` поведение не меняется.
+- Тестов нет; проверка = запустить и посмотреть сгенерированный HTML. **Для быстрой проверки после изменений используйте `--limit=2000`** (не гонять все десятки тысяч сообщений).
 
-  ```
-  php bin/chatstats generate <папка-экспорта> [--key=<ключ>] [--title=<заголовок>]
-                                          [--no-cache] [--rebuild] [--debug]
-  ```
+## Шпаргалка
 
-  - `<папка-экспорта>` — обязательный аргумент; несуществующая папка → ошибка и exit 1.
-  - `--key` по умолчанию — имя папки; задаёт имя выходного файла (`var/html/<key>.html`).
-  - `--title` по умолчанию — ключ; заголовок страницы.
-  - `--no-cache` — не читать и не писать кэш; `--rebuild` — пересобрать кэш принудительно; `--debug` — таблица таймингов обработчиков (Stopwatch) и Twig без авто-перезагрузки.
-- Тестов нет; проверка = запустить и посмотреть сгенерированный HTML.
+- **Пайплайн**: `bin/chatstats` → `Application` → `Console/GenerateCommand` → `MessageSource` (`ExportMessageSource`/`CachedMessageSource`) → `MessageCollection` → `Engine` (выполняет `Stats\StatHandler`) → `Renderer\HtmlRenderer` (Twig) → `var/html/<key>.html`.
+- **Реестр обработчиков** (порядок = порядок панелей): массив `handlers()` в `src/Console/GenerateCommand.php` — 27 обработчиков (13 базовых + 14 новых: реакции, контент-хиты, правки, пересылки, сайты, медиа-вес, опросы, скорость ответа, хронотипы, тепловая карта, серии, активность, само-ответы, длинные сообщения). **Забыть регистрацию — самая частая ошибка.** Список с ключами и шаблонами — в docs/development.md.
+- **Агрегации** живут в `src/Messages/MessageCollection.php` — ленивый однопроходный агрегатор: первое обращение к любому методу проходит по сообщениям один раз и наполняет кэш всех панелей. Новую агрегацию добавлять туда (в `aggregate()` + метод-геттер).
+- **Память**: сообщения не хранятся в памяти целиком — они читаются потоково из чанков кэша (`MessageCollection::iterate()`), агрегация занимает один проход. Пик памяти ~1 чанк (5000 сообщений), не зависит от размера чата. `firstByDate` — однопроходный поиск минимума, без `sortBy`. Реплаи агрегируются вторым проходом по целям (`repliesMatrix`), там же — само-ответы и скорость ответа (`replySpeed`); топ-N (реакции, длинные) хранится срезами. `ReplyLinker` удалён.
+- **Парсер** (`ExportMessageSource`): natsort, пропускает подпапки и `.DS_Store`, типы медиа — карта `MEDIA_SELECTORS` (порядок = приоритет; photo/sticker по `title` в `div.media_photo`). Помимо медиа парсит: реакции (`.reactions .reaction`), правки (`edited` в блоке даты), источник пересылки (`.forwarded_from`), веб-превью (`a.webpage_preview`), размер документов, длительности голосовых/видео, вопрос/ответы опросов. `getMessages()` — генератор (потоково), возвращает сообщения только с `reply_to_id`.
+- **Кэш сообщений** (`CachedMessageSource`): нативный `serialize` чанками в `var/cache/parsers/<signature>-v3/<NNNNN>.ser` (по 5000); сигнатура = имена файлов + mtime папки экспорта (любое изменение → автопересборка); суффикс `-v3` — версия формата (поднимается при изменении сущностей, иначе старый кэш без новых полей остался бы валидным); `reply_to_message` не сериализуется.
+- **Кэш результатов** (`src/ResultsCache.php`): результат `Engine::calculate()` (`key => data`) сериализуется в `var/cache/results/<sig>.ser`; сигнатура = сигнатура экспорта + mtime всех файлов `src/` и `config/` (изменение кода инвалидирует). Повторные прогоны не читают сообщения и не выполняют обработчики (~20-40MB вместо ~2.5G). При `--debug` кэш результатов не используется (нужны честные тайминги); `--no-cache` — не читать/писать.
+- **Конфиги**: `config/users.php` — карта «ник → имя» для `UserHelper::norm()` (срезает ` via @channel`); `config/nicks.php` — карта «имя → ник» для `--nicks`; `config/words.php` — стоп-слова и алиасы.
+- **Сущности** (`src/Entity/`) — публичные DTO; медиа определяются по непустым полям; `MessageType` — маркерный интерфейс. `Message` несёт атрибуты `reactions` (массив `Reaction` — НЕ медиа), `edited`, `forwarded_from`, `webpage_site`, `webpage_title`; детали медиа: `Document::name/size_kb`, `Voice::duration_sec`, `Video::duration_sec`, `Poll::question/answers`. JMS-сериализатор больше не используется (кэш — нативный serialize).
+- Обработчики — чистые функции без состояния: `key()`, `description()` по-русски, `template()`, `handle(MessageCollection): array`.
+- Twig: `auto_reload => !$debug` (инвертировано намеренно), инклюд панелей с `ignore missing` (нет шаблона → пустая панель без ошибки), фильтр `md5` для id аккордеонов, фильтры имён `user_link`/`nicks`, фильтр `duration` (сек → «1 мин 23 с»), cache — `var/twig/cache`. Bootstrap/jQuery не используются: свой CSS (тёмная/светлая тема, переключатель + localStorage), аккордеоны на нативном JS (`DOMContentLoaded`), Chart.js с CDN. Сверху страницы — дашборд KPI + «забавные факты» (`GenerateCommand::buildDashboard()`).
 
-## Пайплайн (поток данных)
+## Как добавить новую статистику
 
-`bin/chatstats` → `Application` → `Console/GenerateCommand` → `MessageSource` (`ExportMessageSource` или `CachedMessageSource`) → `MessageCollection` → `Engine` (выполняет обработчики `Stats\StatHandler`) → `Renderer\HtmlRenderer` (Twig) → `var/html/<key>.html`.
+Пошагово (3 шага: класс → шаблон → регистрация в `GenerateCommand::handlers()`) — в docs/development.md.
 
-- `src/Messages/ExportMessageSource.php`: читает все файлы папки экспорта (natsort, пропускает подпапки и `.DS_Store`), парсит через symfony/dom-crawler по CSS-селекторам. Типы медиа определяются декларативной картой `MEDIA_SELECTORS` (порядок = приоритет; photo/sticker — по title внутри `div.media_photo`). Возвращает сообщения **только с `reply_to_id`** — релинк делает `MessageCollection`.
-- `src/Messages/CachedMessageSource.php`: сериализует сообщения через JMS в `var/cache/parsers/<signature>.json`. Ключ кэша — **сигнатура содержимого папки** (имена файлов + mtime): любое изменение экспорта пересобирает кэш автоматически. `reply_to_message` не сериализуется (релинк после загрузки), поэтому кэш не раздувается рекурсией.
-- `src/Messages/MessageCollection.php`: value-object над коллекцией сообщений (ключ `message_id`); в конструкторе вызывает `ReplyLinker::link()` (проставляет `reply_to_message` по `reply_to_id`). Здесь живут все агрегации: `countByUser()`, `strlenByUser()`, `medianStrlenByUser()`, `countByDate($format)`, `medianByDate($format)`, `countByUserDayHour()`, `countByType()`, `countByTypeAndUser()`, `repliesMatrix()`, `usernames()`, `firstByDate()`, `strlenTotal()`.
-- `src/Stats/`: интерфейс `StatHandler` (`key()`, `description()` по-русски, `template()`, `handle(MessageCollection): array`), база `AbstractStatHandler`, 13 обработчиков — чистые функции без состояния, возвращают массивы-контракты для шаблонов. `Stats/Words/WordsAnalyzer.php` — подсчёт популярных слов (mb_ereg/mb_split, без внешних стринг-библиотек).
-- `src/Engine.php`: последовательно вызывает `handle()` в порядке регистрации; при `--debug` замеряет каждый обработчик.
-- `src/Renderer/HtmlRenderer.php`: рендер `index.twig` + запись файла.
+## Документация
 
-## Добавление новой статистики (3 шага, все обязательны)
-
-1. Новый класс в `src/Stats/`, реализующий `StatHandler` (обычно наследует `AbstractStatHandler`): `key()`, `description()` (по-русски), `handle(MessageCollection): array`. Если агрегация новая — добавить метод в `MessageCollection`.
-2. Шаблон `src/templates/default/handlers/<key>.twig` — получает `data`, `description`, `templateKey`; доступен фильтр `md5` (используйте его для уникальных id аккордеонов, как в существующих шаблонах). В `index.twig` инклюд идёт с `ignore missing`: отсутствующий шаблон даёт **пустую панель без ошибки**.
-3. **Зарегистрировать обработчик** в массиве `handlers()` в `src/Console/GenerateCommand.php`. Забыть про это — самая частая ошибка: статистика просто не считается. **Порядок массива = порядок панелей на странице.**
-
-## Нюансы и конвенции
-
-- Данные для статистики лежат в `config/`: `users.php` — карта «ник → настоящее имя» для `UserHelper::norm()` (дополнять для новых чатов), `words.php` — стоп-слова и алиасы популярных слов.
-- Имена отображаются через `UserHelper::norm($username, $namesMap)` (срезает ` via @channel`, применяет карту из `config/users.php`).
-- Сущности (`src/Entity/`) — простые DTO с публичными свойствами, используются JMS-сериализатором; наличие медиа определяется по непустым полям (Photo, Sticker, Video, ...), `MessageType` — маркерный интерфейс.
-- Обработчики получают `MessageCollection` — эталонный паттерн см. в `src/Messages/MessageCollection.php` и простых обработчиках вроде `CountRepliesByUserHandler`.
-- Twig настраивается с `auto_reload => !$debug` (инвертировано, намеренно), cache — `var/twig/cache`.
+- [docs/README.md](docs/README.md) — оглавление и правило документации
+- [docs/architecture.md](docs/architecture.md) — пайплайн, слои, кэш
+- [docs/usage.md](docs/usage.md) — установка и опции CLI
+- [docs/development.md](docs/development.md) — добавление статистики, реестр обработчиков, конвенции

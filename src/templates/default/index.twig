@@ -4,18 +4,291 @@
     <meta charset="UTF-8">
     <title>{{ title|default("Тут нужен заголовок") }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/2.3.2/css/bootstrap.min.css" rel="stylesheet"
-          media="screen">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.css" rel="stylesheet" media="screen">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-colorschemes"></script>
+    <style>
+        :root {
+            --bg: #f7f7f8;
+            --panel: #ffffff;
+            --panel-2: #f0f0f2;
+            --text: #1c1c1e;
+            --muted: #6e6e73;
+            --border: #dcdce0;
+            --accent: #3b82f6;
+            --accent-2: #2563eb;
+            --heat-0: #ffffff;
+            --heat-1: #e3ecf8;
+            --heat-2: #cfe0f7;
+            --heat-3: #b3d0f4;
+            --heat-4: #8fbcef;
+            --heat-5: #6ea8e8;
+            --heat-6: #4f92df;
+            --heat-7: #337bd3;
+            --heat-8: #1f64c0;
+            --heat-9: #144fa3;
+            --heat-10: #0e3d82;
+            --shadow: 0 1px 3px rgba(0, 0, 0, .08);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --bg: #141518;
+                --panel: #1e1f24;
+                --panel-2: #26272d;
+                --text: #e8e8ea;
+                --muted: #9a9aa2;
+                --border: #33343b;
+                --accent: #4c8dff;
+                --accent-2: #6ea0ff;
+                --heat-0: #1e1f24;
+                --heat-1: #22304a;
+                --heat-2: #2a3f61;
+                --heat-3: #335079;
+                --heat-4: #3d6190;
+                --heat-5: #4772a7;
+                --heat-6: #5284bc;
+                --heat-7: #5d96d1;
+                --heat-8: #68a8e4;
+                --heat-9: #73baf5;
+                --heat-10: #7fccff;
+                --shadow: 0 1px 3px rgba(0, 0, 0, .4);
+            }
+        }
+        :root[data-theme="dark"] {
+            --bg: #141518;
+            --panel: #1e1f24;
+            --panel-2: #26272d;
+            --text: #e8e8ea;
+            --muted: #9a9aa2;
+            --border: #33343b;
+            --accent: #4c8dff;
+            --accent-2: #6ea0ff;
+            --heat-0: #1e1f24;
+            --heat-1: #22304a;
+            --heat-2: #2a3f61;
+            --heat-3: #335079;
+            --heat-4: #3d6190;
+            --heat-5: #4772a7;
+            --heat-6: #5284bc;
+            --heat-7: #5d96d1;
+            --heat-8: #68a8e4;
+            --heat-9: #73baf5;
+            --heat-10: #7fccff;
+            --shadow: 0 1px 3px rgba(0, 0, 0, .4);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+        h1 { font-size: 1.8rem; margin: .5rem 0 1rem; }
+        h4 { margin: 1rem 0 .5rem; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+        small { color: var(--muted); }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { color: var(--accent-2); }
+
+        /* Переключатель темы */
+        .theme-toggle {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 100;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+        }
+
+        /* KPI-карточки */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin: 0 0 20px;
+        }
+        .kpi {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            box-shadow: var(--shadow);
+        }
+        .kpi .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .kpi .label { color: var(--muted); font-size: .82rem; }
+        .kpi .sub { color: var(--muted); font-size: .75rem; margin-top: 4px; }
+
+        /* Фанфакты */
+        .facts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            margin: 0 0 8px;
+        }
+        .fact {
+            background: var(--panel-2);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: .92rem;
+        }
+
+        /* Аккордеоны */
+        .accordion-group {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .accordion-heading a {
+            display: block;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .accordion-heading a:hover { background: var(--panel-2); }
+        .accordion-heading a::before { content: "▸ "; color: var(--muted); }
+        .accordion-heading a:not(.collapsed)::before { content: "▾ "; }
+        .accordion-body { padding: 0 16px 14px; }
+        .accordion-body.collapse { display: none; }
+        .accordion-inner { overflow-x: auto; }
+
+        /* Таблицы */
+        table.table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+        .table th, .table td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+        .table thead th { border-bottom-width: 2px; }
+        .table-striped tbody tr:nth-child(odd) { background: var(--panel-2); }
+
+        .blockquote, blockquote {
+            margin: 8px 0;
+            padding: 8px 14px;
+            border-left: 4px solid var(--accent);
+            background: var(--panel-2);
+            border-radius: 0 8px 8px 0;
+            color: var(--muted);
+        }
+
+        .well { background: var(--panel-2); border-radius: 8px; padding: 10px 12px; margin: 6px 0; }
+        .well-small { padding: 6px 10px; font-size: .9rem; }
+
+        .label {
+            display: inline-block;
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 1px 10px;
+            font-size: .78rem;
+            color: var(--muted);
+        }
+        .label-success { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+        .label-warning { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+        .label-inverse { background: #374151; color: #f3f4f6; border-color: #374151; }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) .label-success { background: #064e3b; color: #a7f3d0; border-color: #065f46; }
+            :root:not([data-theme="light"]) .label-warning { background: #78350f; color: #fde68a; border-color: #92400e; }
+        }
+        :root[data-theme="dark"] .label-success { background: #064e3b; color: #a7f3d0; border-color: #065f46; }
+        :root[data-theme="dark"] .label-warning { background: #78350f; color: #fde68a; border-color: #92400e; }
+
+        .row-fluid { display: flex; flex-wrap: wrap; gap: 16px; }
+        .row-fluid .span6 { flex: 1 1 46%; min-width: 300px; }
+        @media (max-width: 700px) { .row-fluid .span6 { flex-basis: 100%; } }
+
+        canvas { max-width: 100%; }
+
+        /* Тепловая карта */
+        .heatmap { border-collapse: collapse; }
+        .heatmap th, .heatmap td { border: 1px solid var(--border); padding: 2px 3px; text-align: center; font-size: .7rem; }
+        .heatmap th.hour-even { color: var(--accent); }
+        .heatmap-day { white-space: nowrap; text-align: right !important; }
+        .heatmap-cell.l0 { background: var(--heat-0); }
+        .heatmap-cell.l1 { background: var(--heat-1); }
+        .heatmap-cell.l2 { background: var(--heat-2); }
+        .heatmap-cell.l3 { background: var(--heat-3); }
+        .heatmap-cell.l4 { background: var(--heat-4); }
+        .heatmap-cell.l5 { background: var(--heat-5); }
+        .heatmap-cell.l6 { background: var(--heat-6); }
+        .heatmap-cell.l7 { background: var(--heat-7); }
+        .heatmap-cell.l8 { background: var(--heat-8); }
+        .heatmap-cell.l9 { background: var(--heat-9); }
+        .heatmap-cell.l10 { background: var(--heat-10); }
+        .heatmap-legend { margin: 8px 0; color: var(--muted); font-size: .8rem; }
+        .heatmap-legend .heatmap-cell { border: 1px solid var(--border); }
+
+        /* Облако слов */
+        .word-cloud { line-height: 1.9; text-align: center; padding: 8px 0; }
+        .word-cloud .wc-word { margin: 0 6px; color: var(--accent); }
+        .word-cloud .wc-word:hover { color: var(--accent-2); }
+
+        footer { color: var(--muted); text-align: center; font-size: .8rem; padding: 20px 0; }
+    </style>
 </head>
 <body>
 
-<script src="https://code.jquery.com/jquery.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-colorschemes"></script>
+<button class="theme-toggle" id="themeToggle" type="button" title="Переключить тему">🌓</button>
 
 <div class="container">
     <h1>{{ title|default("Тут нужен заголовок") }}</h1>
+
+    {% if dashboard is not empty %}
+        <div class="dashboard">
+            <div class="kpi">
+                <div class="value">{{ dashboard.total_messages|number_format(0, '.', ' ') }}</div>
+                <div class="label">Всего сообщений</div>
+            </div>
+            <div class="kpi">
+                <div class="value">{{ dashboard.total_users|number_format(0, '.', ' ') }}</div>
+                <div class="label">Участников</div>
+            </div>
+            {% if dashboard.days_range > 0 %}
+                <div class="kpi">
+                    <div class="value">{{ dashboard.days_range|number_format(0, '.', ' ') }}</div>
+                    <div class="label">Дней чата</div>
+                    <div class="sub">{{ dashboard.first_date|date('d.m.Y') }} — {{ dashboard.last_date|date('d.m.Y') }}</div>
+                </div>
+            {% endif %}
+            <div class="kpi">
+                <div class="value">{{ dashboard.media_total|number_format(0, '.', ' ') }}</div>
+                <div class="label">Медиа</div>
+            </div>
+            <div class="kpi">
+                <div class="value">{{ dashboard.total_reactions|number_format(0, '.', ' ') }}</div>
+                <div class="label">Реакций</div>
+                <div class="sub">{{ dashboard.top_emojis|join(' ') }}</div>
+            </div>
+            <div class="kpi">
+                <div class="value">{{ dashboard.total_strlen|number_format(0, '.', ' ') }}</div>
+                <div class="label">Знаков</div>
+            </div>
+            {% if dashboard.average_per_day > 0 %}
+                <div class="kpi">
+                    <div class="value">{{ dashboard.average_per_day|number_format(1, '.', ' ') }}</div>
+                    <div class="label">Сообщений / день</div>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if dashboard.facts is not empty %}
+            <div class="facts">
+                {% for fact in dashboard.facts %}
+                    <div class="fact">{{ fact }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endif %}
+
     <hr/>
     <div class="accordion" id="accordion2">
         {% for key, handler in handlers %}
@@ -37,7 +310,37 @@
             </div>
         {% endfor %}
     </div>
+
+    <script>
+        // Аккордеоны без jQuery/Bootstrap.
+        document.querySelectorAll('.accordion-toggle').forEach(function (toggle) {
+            toggle.addEventListener('click', function (event) {
+                event.preventDefault();
+                var body = document.querySelector(toggle.getAttribute('href'));
+                if (!body) return;
+                var isOpen = !body.classList.contains('collapse');
+                body.classList.toggle('collapse', isOpen);
+                toggle.classList.toggle('collapsed', isOpen);
+            });
+        });
+
+        // Тема: системная по умолчанию, переключатель сохраняет выбор.
+        (function () {
+            var KEY = 'chatstats-theme';
+            var saved = null;
+            try { saved = localStorage.getItem(KEY); } catch (e) {}
+            var root = document.documentElement;
+            if (saved === 'dark' || saved === 'light') {
+                root.setAttribute('data-theme', saved);
+            }
+            document.getElementById('themeToggle').addEventListener('click', function () {
+                var current = root.getAttribute('data-theme');
+                var next = current === 'dark' ? 'light' : 'dark';
+                root.setAttribute('data-theme', next);
+                try { localStorage.setItem(KEY, next); } catch (e) {}
+            });
+        })();
+    </script>
 </div>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/2.3.2/js/bootstrap.min.js"></script>
 </body>
 </html>

@@ -1,0 +1,21 @@
+---
+name: Feature request
+about: Suggest a new statistic or feature for Telegram Chat Stats
+title: '[Feature] '
+labels: enhancement
+assignees: ''
+---
+
+**What do you want to add?**
+A clear description of the statistic / table / widget / fact you'd like to see.
+
+**Where should the data come from?**
+The tool only sees data present in the HTML export. Please attach or describe
+the relevant markup fragment (e.g. reactions, poll votes, forwarded sources),
+or explain why the data should already be available to the aggregator.
+
+**Is there a related panel or handler?**
+If it extends an existing statistic, name it (see the registry in `docs/development.md`).
+
+**Additional context**
+Examples of the expected output, mockups, links.

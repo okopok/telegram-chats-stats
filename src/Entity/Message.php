@@ -20,4 +20,19 @@ class Message implements MessageType
     public ?Contact $contact = null;
     public ?Location $location = null;
     public ?Poll $poll = null;
+
+    /** @var Reaction[] реакции на сообщение (эмодзи + количество) */
+    public array $reactions = [];
+
+    /** Сообщение было исправлено (в экспорте есть пометка «edited») */
+    public bool $edited = false;
+
+    /** Источник пересылки, например «Илья Ларин» (текст после «Forwarded from ») */
+    public ?string $forwarded_from = null;
+
+    /** Сайт веб-превью ссылки, например «YouTube» */
+    public ?string $webpage_site = null;
+
+    /** Заголовок веб-превью ссылки */
+    public ?string $webpage_title = null;
 }

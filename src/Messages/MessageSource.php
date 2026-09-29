@@ -4,5 +4,8 @@ namespace ChatStats\Messages;
 
 interface MessageSource
 {
-    public function getMessages(): MessageCollection;
+    /**
+     * @return iterable<Message>|MessageCollection источник сообщений
+     */
+    public function getMessages();
 }

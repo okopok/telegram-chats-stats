@@ -1,0 +1,52 @@
+{% if data.totals is empty %}
+    <blockquote>В этом чате пока нет ссылок с превью.</blockquote>
+{% else %}
+    <h4>Топ сайтов</h4>
+    <canvas id="{{ templateKey }}_totals" width="400"
+            height="{% if data.totals|length > 10 %}{{ data.totals|length * 10 }}{% else %}100{% endif %}"></canvas>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            new Chart('{{ templateKey }}_totals', {
+                type: 'horizontalBar',
+                data: {
+                    labels: {{ data.totals|map(r => r.site)|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }},
+                    datasets: [{
+                        label: 'Ссылок',
+                        data: [{{ data.totals|map(r => r.count)|join(', ')|raw }}],
+                    }]
+                },
+                options: {
+                    plugins: {colorschemes: {scheme: 'brewer.Paired12'}},
+                    responsible: true,
+                    animation: {duration: 0},
+                    hover: {animationDuration: 0},
+                    responsiveAnimationDuration: 0
+                }
+            });
+        });
+    </script>
+    <hr/>
+    <div class="accordion" id="accordion2_{{ templateKey }}">
+        {% for row in data.by_user %}
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle collapsed" data-toggle="collapse"
+                       data-parent="#accordion2_{{ templateKey }}"
+                       href="#{{ templateKey }}_{{ row.user|md5 }}">
+                        {{ row.user|user_link }}
+                        ({{ row.sites|map(s => s.count)|reduce((carry, v) => carry + v, 0) }})
+                    </a>
+                </div>
+                <div id="{{ templateKey }}_{{ row.user|md5 }}" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <ul>
+                            {% for s in row.sites %}
+                                <li>{{ s.site }} — {{ s.count|number_format(0, '.', ' ') }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}

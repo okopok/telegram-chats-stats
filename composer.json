@@ -1,28 +1,37 @@
 {
-  "name": "okopok/chatstats",
-  "description": "Подсчёт статистики по телегамм чатикам",
-  "minimum-stability": "stable",
-  "license": "GPL-3.0 +",
-  "authors": [
-    {
-      "name": "molodtsov",
-      "email": "email@example.com"
+    "name": "okopok/telegram-chats-stats",
+    "description": "Statistics for Telegram Desktop chat exports: parses HTML exports and generates a static HTML page with 27 charts, tables and fun facts. No framework, no server, no database.",
+    "minimum-stability": "stable",
+    "license": "GPL-3.0-or-later",
+    "homepage": "https://github.com/okopok/telegram-chats-stats",
+    "keywords": [
+        "telegram",
+        "chat",
+        "statistics",
+        "stats",
+        "export",
+        "html",
+        "cli"
+    ],
+    "authors": [
+        {
+            "name": "Molodtsov Aleksandr",
+            "email": "molodtsov.sasha@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "ChatStats\\": "src"
+        }
+    },
+    "require": {
+        "php": ">=8.4",
+        "ext-mbstring": "*",
+        "symfony/console": "^7.0",
+        "symfony/dom-crawler": "^7.0",
+        "symfony/css-selector": "^7.0",
+        "symfony/stopwatch": "^7.0",
+        "twig/twig": "^3.0",
+        "illuminate/collections": "^12"
     }
-  ],
-  "autoload": {
-    "psr-4": {
-      "ChatStats\\": "src"
-    }
-  },
-  "require": {
-    "php": ">=8.4",
-    "ext-mbstring": "*",
-    "symfony/console": "^7.0",
-    "symfony/css-selector": "^7.0",
-    "symfony/dom-crawler": "^7.0",
-    "symfony/stopwatch": "^7.0",
-    "twig/twig": "^3.0",
-    "jms/serializer": "^3.30",
-    "illuminate/collections": "^12"
-  }
 }

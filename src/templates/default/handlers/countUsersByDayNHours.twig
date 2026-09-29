@@ -4,7 +4,7 @@
             <div class="accordion-heading">
                 <a class="accordion-toggle collapsed" data-toggle="collapse"
                    data-parent="#accordion2_countUsersByDayNHours" href="#countUsersByDayNHours_{{ stat.hash }}">
-                    {{ usename }}
+                    {{ usename|user_link }}
                 </a>
             </div>
             <div id="countUsersByDayNHours_{{ stat.hash }}" class="accordion-body collapse">
@@ -12,7 +12,7 @@
                     <canvas id="countUsersByDayNHours_weeks_{{ stat.hash }}" width="400" height="100"
                             style="display: block; width: 500px; height: 250px;"></canvas>
                     <script>
-                        $(function () {
+                        document.addEventListener('DOMContentLoaded', function () {
                             new Chart('countUsersByDayNHours_weeks_{{ stat.hash }}', {
                                     type: 'bar',
                                     data: {
@@ -39,7 +39,7 @@
                     <canvas id="countUsersByDayNHours_days_{{ stat.hash }}" width="400" height="100"
                             style="display: block; width: 500px; height: 250px;"></canvas>
                     <script>
-                        $(function () {
+                        document.addEventListener('DOMContentLoaded', function () {
                             new Chart('countUsersByDayNHours_days_{{ stat.hash }}', {
                                     type: 'line',
                                     data: {

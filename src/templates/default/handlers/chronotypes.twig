@@ -1,0 +1,30 @@
+{% if data.by_user is empty %}
+    <blockquote>Нет данных об активности по часам.</blockquote>
+{% else %}
+    <table class="table table-striped table-condensed">
+        <thead>
+        <tr>
+            <th>Участник</th>
+            <th>Зоны суток</th>
+            <th>Пик</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in data.by_user %}
+            <tr>
+                <td>{{ row.user|user_link }} <span class="label">{{ row.type_label }}</span></td>
+                <td>
+                    {% for zone in row.zones %}
+                        <div style="margin-bottom: 2px;">
+                            <span style="display: inline-block; width: 90px;">{{ zone.label }}</span>
+                            <span style="display: inline-block; height: 14px; vertical-align: middle; background: #468847; width: {{ zone.share * 2.5 }}px;"></span>
+                            <small>{{ zone.share }}% ({{ zone.count|number_format(0, '.', ' ') }})</small>
+                        </div>
+                    {% endfor %}
+                </td>
+                <td>{{ row.peak_hour }}:00</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}

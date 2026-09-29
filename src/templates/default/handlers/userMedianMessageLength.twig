@@ -1,11 +1,11 @@
 <canvas id="{{ templateKey }}_canvas" width="400"
         height="{% if data|length > 10 %}{{ data|length * 10 }}{% else %}100{% endif %}"></canvas>
 <script>
-    $(function () {
+    document.addEventListener('DOMContentLoaded', function () {
         new Chart('{{ templateKey }}_canvas', {
                 type: 'horizontalBar',
                 data: {
-                    labels: {{ data|keys|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }},
+                    labels: {{ data|keys|nicks|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }},
                     datasets: [{
                         label: 'Средняя длинна сообщений',
                         data: [{{ data|join(', ')|raw }}],

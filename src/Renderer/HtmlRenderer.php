@@ -26,12 +26,14 @@ final class HtmlRenderer
      * @param string $outputFile путь к итоговому HTML
      * @param string $title заголовок страницы
      * @param array<string, array{description: string, data: array, template: string}> $results
+     * @param array<string, mixed> $dashboard сводка для KPI-карточек вверху страницы
      */
-    public function render(string $outputFile, string $title, array $results): void
+    public function render(string $outputFile, string $title, array $results, array $dashboard = []): void
     {
         $content = $this->twig->render('index.twig', [
             'handlers' => $results,
             'title' => $title,
+            'dashboard' => $dashboard,
         ]);
 
         $dir = dirname($outputFile);

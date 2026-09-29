@@ -22,7 +22,7 @@
                                     <a class="accordion-toggle collapsed" data-toggle="collapse"
                                        data-parent="#accordion2_{{ templateKey }}"
                                        href="#{{ templateKey }}_{{ username|md5 }}">
-                                        {{ username }}
+                                        {{ username|user_link }}
                                     </a>
                                 </div>
                                 <div id="{{ templateKey }}_{{ username|md5 }}" class="accordion-body collapse">
@@ -30,7 +30,7 @@
                                         <canvas id="{{ templateKey }}_{{ username|md5 }}_canvas" width="400"
                                                 height="{% if words|length > 10 %}{{ words|length * 10 }}{% else %}100{% endif %}"></canvas>
                                         <script>
-                                            $(function () {
+                                            document.addEventListener('DOMContentLoaded', function () {
                                                 new Chart('{{ templateKey }}_{{ username|md5 }}_canvas', {
                                                         type: 'horizontalBar',
                                                         data: {
@@ -91,7 +91,7 @@
                                     <a class="accordion-toggle collapsed" data-toggle="collapse"
                                        data-parent="#accordion2_{{ templateKey }}_uniq_level"
                                        href="#{{ templateKey }}_{{ username|md5 }}_uniq">
-                                        {{ username }}
+                                        {{ username|user_link }}
                                     </a>
                                 </div>
                                 <div id="{{ templateKey }}_{{ username|md5 }}_uniq" class="accordion-body collapse">
@@ -121,11 +121,11 @@
                     <canvas id="{{ templateKey }}_{{ word }}" width="400"
                             height="{% if users|length > 10 %}{{ users|length * 10 }}{% else %}100{% endif %}"></canvas>
                     <script>
-                        $(function () {
+                        document.addEventListener('DOMContentLoaded', function () {
                             new Chart('{{ templateKey }}_{{ word }}', {
                                     type: 'horizontalBar',
                                     data: {
-                                        labels: {{ users|keys|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }},
+                                        labels: {{ users|keys|nicks|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }},
                                         datasets: [{
                                             label: '{{ word }}',
                                             data: [{{ users|join(', ')|raw }}],
@@ -164,6 +164,16 @@
         </div>
         <div id="{{ templateKey }}_toplevel_total" class="accordion-body collapse">
             <div class="accordion-inner">
+                {% if data.total is not empty %}
+                    {# Облако слов: размер шрифта пропорционален частоте. #}
+                    {% set maxCount = data.total|first %}
+                    <div class="word-cloud">
+                        {% for word, ct in data.total %}
+                            <span class="wc-word" style="font-size: {{ 12 + (ct / maxCount * 26)|round }}px;">{{ word }}</span>
+                        {% endfor %}
+                    </div>
+                    <hr/>
+                {% endif %}
                 <ol>
                     {% for word, ct in data.total %}
                         <li>{{ word }} — {{ ct }}</li>
