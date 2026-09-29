@@ -5,10 +5,13 @@ namespace ChatStats\Console;
 use ChatStats\Engine;
 use ChatStats\Messages\ExportMessageSource;
 use ChatStats\Renderer\HtmlRenderer;
+use ChatStats\Stats\CountByTypeAndUserHandler;
+use ChatStats\Stats\CountRepliesByUserHandler;
 use ChatStats\Stats\CountTotalByDateHandler;
 use ChatStats\Stats\CountTotalByUserHandler;
 use ChatStats\Stats\CountTotalHandler;
 use ChatStats\Stats\CountTotalUsersHandler;
+use ChatStats\Stats\CountUsersByDayNHoursHandler;
 use ChatStats\Stats\FirstMessageHandler;
 use ChatStats\Stats\MedianByDateHandler;
 use ChatStats\Stats\StatHandler;
@@ -111,6 +114,9 @@ final class GenerateCommand extends Command
             new StrlenByUserHandler(),
             new UserMedianMessageLengthHandler(),
             new CountTotalUsersHandler(),
+            new CountRepliesByUserHandler(),
+            new CountUsersByDayNHoursHandler(),
+            new CountByTypeAndUserHandler(),
         ];
     }
 
