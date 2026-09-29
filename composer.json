@@ -16,6 +16,7 @@
   },
   "require": {
     "php": ">=8.4",
+    "ext-mbstring": "*",
     "symfony/console": "^7.0",
     "symfony/css-selector": "^7.0",
     "symfony/dom-crawler": "^7.0",

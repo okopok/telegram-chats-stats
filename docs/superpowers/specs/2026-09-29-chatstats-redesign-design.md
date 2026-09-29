@@ -50,10 +50,11 @@ src/templates/default/…              — те же шаблоны; правк�
 
 ## 3. composer.json
 
-- `"php": ">=8.4"`
+- `"php": ">=8.4"`, `"ext-mbstring": "*"`
 - require:
-  - `tightenco/collect ^9.0`
+  - `illuminate/collections ^12` (преемник заброшенного tightenco/collect; API совместим, работает без E_DEPRECATED на PHP 8.5)
   - `symfony/console ^7.0`
+  - `symfony/css-selector ^7.0` (обязателен: dom-crawler 7 сам его больше не тянет, а `Crawler::filter()` без него падает)
   - `symfony/dom-crawler ^7.0`
   - `symfony/stopwatch ^7.0` (переносится из require-dev — используется в обычном режиме `--debug`)
   - `twig/twig ^3.0`

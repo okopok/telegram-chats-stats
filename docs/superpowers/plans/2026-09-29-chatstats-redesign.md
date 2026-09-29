@@ -6,7 +6,7 @@
 
 **Architecture:** Источники (`MessageSource`) отдают `MessageCollection` (value-object с агрегациями и релинком реплаев); `Engine` последовательно вызывает чистые `StatHandler`-функции; `HtmlRenderer` рендерит Twig и пишет файл; композиция в `GenerateCommand` (symfony/console), конфиги в `config/*.php`.
 
-**Tech Stack:** PHP 8.5, symfony/console 7, symfony/dom-crawler 7, twig 3, jms/serializer 3.30, tightenco/collect 9, symfony/stopwatch 7.
+**Tech Stack:** PHP 8.5, symfony/console 7, symfony/dom-crawler 7, twig 3, jms/serializer 3.30, illuminate/collections 12, symfony/stopwatch 7.
 
 **Spec:** `docs/superpowers/specs/2026-09-29-chatstats-redesign-design.md`
 
@@ -16,7 +16,7 @@
 - Тестов нет (договорённость): верификация = запуск + сверка с `var/html/baseline-sts.html`.
 - Комментарии, `getDescription()` и шаблоны — на русском.
 - Контракты данных с шаблонами обработчиков не меняются (те же структуры, что перечислены в спеке §7).
-- Порядок обработчиков на странице — как в текущем `public/functions.php` (§ 4 спеки: FirstMessage, CountTotal, TotalStrlen, MedianByDate, CountTotalByDate, CountTotalByUser, StrlenByUser, UserMedianMessageLength, CountTotalUsers, CountRepliesByUser, CountUsersByDayNHours, CountByTypeAndUser, PopularWords).
+- Порядок обработчиков на странице — как в реальном `public/functions.php` (проверено по базлайну): FirstMessage, CountTotal, TotalStrlen, MedianByDate, CountTotalByUser, StrlenByUser, UserMedianMessageLength, CountTotalUsers, CountTotalByDate, CountRepliesByUser, CountUsersByDayNHours, CountByTypeAndUser, PopularWords.
 - Полностью убираются `str/str` и `symfony/var-dumper`; `autoload.files` из composer удаляется.
 - Старый код (до Task 1 шаг 2) генерирует базлайн, после `composer update` он больше не запускается — сверка идёт только с сохранённой страницей.
 - Реальные данные: `public/data/sts` (166 МБ, 246 HTML), выход — `var/html/<key>.html`, кэш — `var/cache/parsers/<signature>.json`.

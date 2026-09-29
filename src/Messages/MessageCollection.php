@@ -183,11 +183,12 @@ final readonly class MessageCollection
     }
 
     /**
-     * Тип сообщения по полям-медиа; порядок проверки как в прежнем CountByTypeAndUser.
+     * Тип сообщения по полям-медиа; порядок проверки как в прежнем CountByTypeAndUser,
+     * contact добавлен как новый тип (см. ExportMessageSource::MEDIA_SELECTORS).
      */
     private function typeOf(Message $message): string
     {
-        $types = ['poll', 'video', 'audio', 'photo', 'sticker', 'voice', 'location', 'animation', 'document'];
+        $types = ['poll', 'video', 'audio', 'photo', 'sticker', 'voice', 'location', 'animation', 'document', 'contact'];
         foreach ($types as $type) {
             if ($message->{$type} instanceof MessageType) {
                 return $type;

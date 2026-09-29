@@ -1,6 +1,9 @@
 #!/usr/bin/env php
 <?php
 
+// Экспорты большие (сотни МБ), JMS-десериализация кэша требует много памяти.
+ini_set('memory_limit', '1G');
+
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 exit((new ChatStats\Application())->run());

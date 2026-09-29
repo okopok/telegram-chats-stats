@@ -5,6 +5,7 @@ namespace ChatStats\Messages;
 use ChatStats\Entity\Message;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerBuilder;
+use RuntimeException;
 use function collect;
 use function dirname;
 use function file_exists;
@@ -12,8 +13,10 @@ use function file_get_contents;
 use function file_put_contents;
 use function filemtime;
 use function is_dir;
+use function mkdir;
 use function scandir;
 use function sha1;
+use function sprintf;
 
 /**
  * Кэширует разобранные сообщения в JSON.
@@ -60,7 +63,13 @@ final class CachedMessageSource implements MessageSource
                 'json',
                 SerializationContext::create()->setInitialType('array<ChatStats\Entity\Message>')
             );
-            file_put_contents($cacheFile, $data);
+            $dir = dirname($cacheFile);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0777, true);
+            }
+            if (file_put_contents($cacheFile, $data) === false) {
+                throw new RuntimeException(sprintf('Не удалось записать кэш: %s', $cacheFile));
+            }
             unset($data);
         }
 

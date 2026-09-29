@@ -3,7 +3,12 @@
 namespace ChatStats\Renderer;
 
 use Twig\Environment;
+use RuntimeException;
+use function dirname;
 use function file_put_contents;
+use function is_dir;
+use function mkdir;
+use function sprintf;
 
 /**
  * Рендерит страницу статистики через Twig и пишет HTML-файл.
@@ -29,6 +34,12 @@ final class HtmlRenderer
             'title' => $title,
         ]);
 
-        file_put_contents($outputFile, $content);
+        $dir = dirname($outputFile);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        if (file_put_contents($outputFile, $content) === false) {
+            throw new RuntimeException(sprintf('Не удалось записать файл: %s', $outputFile));
+        }
     }
 }
