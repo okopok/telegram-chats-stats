@@ -12,21 +12,16 @@
   "autoload": {
     "psr-4": {
       "ChatStats\\": "src"
-    },
-    "files": [
-      "public/functions.php"
-    ]
+    }
   },
   "require": {
-    "php": ">=7.4",
-    "tightenco/collect": "^7.10",
-    "str/str": "^1.1",
-    "symfony/dom-crawler": "^5.1",
+    "php": ">=8.4",
+    "symfony/console": "^7.0",
+    "symfony/css-selector": "^7.0",
+    "symfony/dom-crawler": "^7.0",
+    "symfony/stopwatch": "^7.0",
     "twig/twig": "^3.0",
-    "jms/serializer": "^3.7"
-  },
-  "require-dev": {
-    "symfony/stopwatch": "^5.1",
-    "symfony/var-dumper": "^5.1"
+    "jms/serializer": "^3.30",
+    "illuminate/collections": "^12"
   }
 }
