@@ -5,8 +5,10 @@ namespace ChatStats\Console;
 use ChatStats\Engine;
 use ChatStats\Messages\ExportMessageSource;
 use ChatStats\Renderer\HtmlRenderer;
+use ChatStats\Stats\CountTotalByDateHandler;
 use ChatStats\Stats\CountTotalHandler;
 use ChatStats\Stats\FirstMessageHandler;
+use ChatStats\Stats\MedianByDateHandler;
 use ChatStats\Stats\StatHandler;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
@@ -99,6 +101,8 @@ final class GenerateCommand extends Command
         return [
             new FirstMessageHandler(),
             new CountTotalHandler(),
+            new MedianByDateHandler(),
+            new CountTotalByDateHandler(),
         ];
     }
 
