@@ -3,6 +3,7 @@
 namespace ChatStats\Console;
 
 use ChatStats\Engine;
+use ChatStats\Messages\CachedMessageSource;
 use ChatStats\Messages\ExportMessageSource;
 use ChatStats\Renderer\HtmlRenderer;
 use ChatStats\Stats\CountByTypeAndUserHandler;
@@ -67,10 +68,13 @@ final class GenerateCommand extends Command
         /** @var string|null $titleOption */
         $titleOption = $input->getOption('title');
         $title = $titleOption ?: $key;
+        $cacheEnabled = !$input->getOption('no-cache');
+        $rebuild = (bool)$input->getOption('rebuild');
         $debug = (bool)$input->getOption('debug');
 
         $namesMap = require dirname(__DIR__, 2) . '/config/users.php';
-        $source = new ExportMessageSource($dir, $namesMap);
+        $exportSource = new ExportMessageSource($dir, $namesMap);
+        $source = new CachedMessageSource($exportSource, $dir, $cacheEnabled, $rebuild);
 
         $messages = $source->getMessages();
 
