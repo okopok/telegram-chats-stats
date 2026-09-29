@@ -18,19 +18,19 @@
     <h1>{{ title|default("Тут нужен заголовок") }}</h1>
     <hr/>
     <div class="accordion" id="accordion2">
-        {% for handler in handlers %}
+        {% for key, handler in handlers %}
             <div class="accordion-group">
                 <div class="accordion-heading">
                     <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion2"
-                       href="#{{ handler.getKey }}">
-                        {{ handler.getDescription }}
+                       href="#{{ key }}">
+                        {{ handler.description }}
                     </a>
                 </div>
-                <div id="{{ handler.getKey }}" class="accordion-body collapse">
+                <div id="{{ key }}" class="accordion-body collapse">
                     <div class="accordion-inner">
-                        {% include "handlers/" ~ handler.getTemplate
+                        {% include "handlers/" ~ handler.template
                             ignore missing
-                            with {'description': handler.getDescription, 'data': handler.getData, 'templateKey': handler.getKey }
+                            with {'description': handler.description, 'data': handler.data, 'templateKey': key }
                             only %}
                     </div>
                 </div>

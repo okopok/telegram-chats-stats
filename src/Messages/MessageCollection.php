@@ -79,7 +79,7 @@ final readonly class MessageCollection
             ->groupBy(static fn (Message $item) => $item->from->username)
             ->map(function (Collection $messages) {
                 $total = $messages->sum(static fn (Message $message) => mb_strlen($message->text));
-                return $messages->count() > 0 ? round($total / $messages->count()) : 0;
+                return $messages->count() > 0 ? (int)round($total / $messages->count()) : 0;
             })
             ->sortDesc()
             ->all();
