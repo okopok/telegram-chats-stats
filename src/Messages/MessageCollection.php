@@ -73,6 +73,11 @@ final readonly class MessageCollection
             ->all();
     }
 
+    public function strlenTotal(): int
+    {
+        return $this->messages->sum(static fn (Message $message) => mb_strlen($message->text));
+    }
+
     public function medianStrlenByUser(): array
     {
         return $this->messages
